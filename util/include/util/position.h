@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <utility>
 #include <functional>
 
@@ -43,6 +44,22 @@ constexpr Delta operator-(const Position& pos1, const Position& pos2)
 {
     return {pos1.y - pos2.y, pos1.x - pos2.x};
 }
+
+// directions ordered clockwise
+enum class DirectionIndex
+{
+    Up,
+    Right,
+    Down,
+    Left,
+};
+using Direction = Delta;
+constexpr inline Direction up{0, -1};
+constexpr inline Direction down{0, 1};
+constexpr inline Direction left{-1, 0};
+constexpr inline Direction right{1, 0};
+
+constexpr inline auto directions = std::to_array({up, right, down, left});
 
 }  // namespace aoc2024::util::position
 
