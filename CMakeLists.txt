@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.28)
+project(aoc2024)
+
+set(CMAKE_CXX_STANDARD 26)
+add_compile_options(-Wall -Wextra -Werror -Wpedantic)
+
+find_package(range-v3 REQUIRED)
+add_subdirectory(util)
+add_subdirectory(day1)
+add_subdirectory(day2)
+add_subdirectory(day3)
+add_subdirectory(day4)
+add_subdirectory(day5)
+add_subdirectory(day6)
+add_subdirectory(day7)
+add_subdirectory(day8)
+add_subdirectory(day9)

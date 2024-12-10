@@ -1,0 +1,59 @@
+# Ignore build directories
+/cmake-build-*/
+
+# Ignore IDE files
+.idea/
+*.iws
+*.iml
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# macOS resource forks
+_*
+
+# macOS icon files
+Icon?
+._*
+
+# macOS temporary files
+.Spotlight-V100
+.Trashes
+*.swp
+*~
+
+# Ignore compiled binaries and libraries
+*.o
+*.obj
+*.so
+*.dylib
+*.a
+*.lib
+*.dll
+*.exe
+*.out
+
+# Ignore debug and coverage files
+*.d
+*.gch
+*.gcda
+*.gcno
+*.gcov
+
+# Lock files
+.lock
+
+# User-specific or temporary files
+*.user
+*.log
+*.tmp
+*.test
+
+# Ignore CMake cache
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+build/
