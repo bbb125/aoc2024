@@ -110,39 +110,45 @@ std::uint64_t solve(std::string_view input)
         fs.emplace_back(blockSize, offset, id);
         offset += blockSize;
     }
-    for (auto it = std::prev(std::end(fs)); it != std::begin(fs); --it)
+
+    // we don't preserve order, it doesn't impact the result
+    for (auto& [fileSize, fileOffset, _] :
+         fs | views::reverse | views::filter(std::not_fn(&Block::empty)))
     {
-        auto& block = *it;
-        if (block.empty())
+        auto emptyBlocks = fs | views::filter(&Block::empty)
+                           | views::take_while(
+                               [fileOffset](const auto& block)
+                               {
+                                   return block.offset < fileOffset;
+                               });
+        auto& [emptySize, emptyOffset, _2] =
+            *find_if(emptyBlocks,
+                     std::bind_front(std::greater_equal{}, fileSize),
+                     &Block::size);
+
+        if (emptyOffset > fileOffset)
             continue;
 
-        auto emptyBlockIt = std::find_if(  //
-            std::begin(fs),
-            it,
-            [size = block.size](auto& block)
-            {
-                return block.empty() && block.size >= size;
-            });
-        if (emptyBlockIt == it)
-            continue;
+        // update file block
+        fileOffset = emptyOffset;
 
-        auto& [size, offset, id] = *emptyBlockIt;
-        fs.insert(emptyBlockIt,
-                  Block{size - block.size, offset + block.size, std::nullopt});
-        size = block.size;
-        id = block.id;
-        it = fs.erase(it);
+        // update empty block
+        emptySize -= fileSize;
+        emptyOffset += fileSize;
     }
 
     return accumulate(  //
-        fs | views::filter(std::not_fn(&Block::empty)),
+        fs | views::filter(std::not_fn(&Block::empty))
+            | views::transform(
+                [](const auto& block)
+                {
+                    const auto& [size, offset, id] = block;
+                    return *id * size * offset + (*id * size * (size - 1)) / 2;
+                }),
         std::uint64_t{0},
-        [](auto acc, const auto& block)
-        {
-            const auto& [size, offset, id] = block;
-            return acc + *id * size * offset + (*id * size * (size - 1)) / 2;
-        });
+        std::plus{});
 }
+
 
 void test()
 {
