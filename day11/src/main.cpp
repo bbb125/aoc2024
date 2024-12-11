@@ -10,34 +10,8 @@
 
 namespace aoc2024::day11
 {
-
-auto countDigits(std::uint64_t pebble)
-{
-    std::uint8_t counter = 0;
-    while (pebble > 0)
-    {
-        pebble /= 10;
-        ++counter;
-    }
-    return counter;
-}
-
-struct DigitsCounter
-{
-    std::unordered_map<std::uint64_t, std::uint8_t> digitsCache;
-    std::uint8_t operator()(std::uint64_t pebble)
-    {
-        auto& digits = digitsCache[pebble];
-        if (digits == 0)
-            digits = countDigits(pebble);
-        return digits;
-    }
-};
-
-bool isEven(std::uint64_t pebble)
-{
-    return pebble % 2 == 0;
-}
+using util::countDigits;
+using util::isEven;
 
 std::uint64_t evolvePebbles(std::span<std::uint64_t> input, std::uint64_t times)
 {
@@ -50,7 +24,6 @@ std::uint64_t evolvePebbles(std::span<std::uint64_t> input, std::uint64_t times)
             ++result[pebble];
         return result;
     }();
-    DigitsCounter digitsCounter;
     for (std::size_t i = 0; i < times; ++i)
     {
         PebbleGeneration nextGeneration;
@@ -58,11 +31,12 @@ std::uint64_t evolvePebbles(std::span<std::uint64_t> input, std::uint64_t times)
         {
             if (number == 0)
                 nextGeneration[1] += count;
-            else if (auto digits = digitsCounter(number); isEven(digits))
+            else if (auto digits = countDigits(number); isEven(digits))
             {
-                std::uint64_t split = std::pow(10, digits / 2);
-                nextGeneration[number / split] += count;
-                nextGeneration[number % split] += count;
+                auto [div, mod] =
+                    std::ldiv(number, std::uint64_t(std::pow(10, digits / 2)));
+                nextGeneration[div] += count;
+                nextGeneration[mod] += count;
             }
             else
                 nextGeneration[number * 2024] += count;
@@ -74,6 +48,7 @@ std::uint64_t evolvePebbles(std::span<std::uint64_t> input, std::uint64_t times)
                       std::plus{},
                       &PebbleGeneration::value_type::second);
 }
+
 namespace part1
 {
 
@@ -107,9 +82,10 @@ void solve()
 
 int main()
 {
+    using namespace aoc2024;
     using namespace aoc2024::day11;
     part1::test();
-    aoc2024::util::withTimer("part1::solve", part1::solve);
-    aoc2024::util::withTimer("part2::solve", part2::solve);
+    util::withTimer("part1::solve", part1::solve);
+    util::withTimer("part2::solve", part2::solve);
     return 0;
 }

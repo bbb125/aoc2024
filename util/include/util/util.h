@@ -9,6 +9,7 @@
 
 namespace aoc2024::util
 {
+
 template <typename Func>
 void processInts(std::string_view input, Func&& func)
 {
@@ -16,6 +17,23 @@ void processInts(std::string_view input, Func&& func)
     for (int i; iss >> i;)
         func(i);
 }
+
+auto countDigits(std::uint64_t pebble)
+{
+    std::uint8_t counter = 0;
+    while (pebble > 0)
+    {
+        pebble /= 10;
+        ++counter;
+    }
+    return counter;
+}
+
+bool isEven(std::uint64_t pebble)
+{
+    return pebble % 2 == 0;
+}
+
 
 template <typename Func>
 void withTimer(std::string_view label, Func&& func)
