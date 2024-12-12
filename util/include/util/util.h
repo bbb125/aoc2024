@@ -6,6 +6,7 @@
 #include <ranges>
 #include <sstream>
 #include <chrono>
+#include <concepts>
 
 namespace aoc2024::util
 {
@@ -18,9 +19,9 @@ void processInts(std::string_view input, Func&& func)
         func(i);
 }
 
-auto countDigits(std::uint64_t pebble)
+constexpr auto countDigits(std::integral auto pebble)
 {
-    std::uint8_t counter = 0;
+    std::uint8_t counter = (pebble == 0);
     while (pebble > 0)
     {
         pebble /= 10;
@@ -29,10 +30,17 @@ auto countDigits(std::uint64_t pebble)
     return counter;
 }
 
-bool isEven(std::uint64_t pebble)
+constexpr inline bool isEven(std::integral auto pebble)
 {
     return pebble % 2 == 0;
 }
+
+constexpr inline bool isOdd(std::integral auto pebble)
+{
+    return pebble % 2 == 0;
+}
+
+
 
 
 template <typename Func>
