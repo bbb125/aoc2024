@@ -21,4 +21,48 @@ inline constexpr auto constant = []<typename T>(T&& value)
     };
 };
 
+
+namespace detail
+{
+
+// Overload selector
+template <typename... Args>
+struct selector
+{
+    template <typename R, typename C>
+    constexpr auto operator()(R (C::*func)(Args...) const) const -> decltype(func)
+    {
+        return func;
+    }
+
+    template <typename R, typename C>
+    constexpr auto operator()(R (C::*func)(Args...)) const -> decltype(func)
+    {
+        return func;
+    }
+
+    template <typename R>
+    constexpr auto operator()(R (*func)(Args...)) const -> decltype(func)
+    {
+        return func;
+    }
+};
+}  // namespace detail
+
+/**
+ * A helper that selects specified overload of a function to pass as parameter
+ * or store.
+ * Implemented as a less verbose and more expressive alternative to static_cast.
+ * Works on both class members and standalone functions.
+ * @example
+ * // without helper
+ * ::ranges::transform(input, output, static_cast<std::string(*)(int)>(&std::to_string));
+ * // with helper
+ * ::ranges::transform(input, output, functional::select<int>(&std::to_string));
+ *
+ * @tparam Args
+ */
+template <typename... Args>
+inline constexpr detail::selector<Args...> select{};
+
 }  // namespace aoc2024::util::functional
