@@ -1,8 +1,13 @@
 #pragma once
 
+#include <range/v3/view/cartesian_product.hpp>
+#include <range/v3/view/transform.hpp>
+#include <range/v3/view/iota.hpp>
+
 #include <array>
 #include <utility>
 #include <functional>
+#include <tuple>
 
 namespace aoc2024::util::position
 {
@@ -30,6 +35,21 @@ struct Position
     int x = 0;
 };
 
+auto format_as(const Position& position)
+{
+    return std::tie(position.y, position.x);
+}
+
+constexpr bool lessByX(const Position& lhs, const Position& rhs)
+{
+    return std::tie(lhs.x, lhs.y) < std::tie(rhs.x, rhs.y);
+}
+
+constexpr bool lessByY(const Position& lhs, const Position& rhs)
+{
+    return std::tie(lhs.y, lhs.x) < std::tie(rhs.y, rhs.x);
+}
+
 constexpr Position operator+(const Position& pos, const Delta& delta)
 {
     return {pos.y + delta.first, pos.x + delta.second};
@@ -53,14 +73,29 @@ enum class DirectionIndex
     Down,
     Left,
 };
+constexpr std::size_t toIndex(DirectionIndex index)
+{
+    return std::to_underlying(index);
+}
 using Direction = Delta;
-constexpr inline Direction up{0, -1};
-constexpr inline Direction down{0, 1};
-constexpr inline Direction left{-1, 0};
-constexpr inline Direction right{1, 0};
+constexpr inline Direction up{-1, 0};
+constexpr inline Direction down{1, 0};
+constexpr inline Direction left{0, -1};
+constexpr inline Direction right{0, 1};
 
 constexpr inline auto directions = std::to_array({up, right, down, left});
 
+auto all(std::size_t height, std::size_t width)
+{
+    using namespace ::ranges;
+    return views::cartesian_product(views::iota(0, static_cast<int>(height)),
+                                    views::iota(0, static_cast<int>(width)))
+           | views::transform(
+               [](const auto& val) -> Position
+               {
+                   return {std::get<0>(val), std::get<1>(val)};
+               });
+}
 }  // namespace aoc2024::util::position
 
 namespace std
