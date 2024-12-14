@@ -85,6 +85,11 @@ constexpr inline Direction right{0, 1};
 
 constexpr inline auto directions = std::to_array({up, right, down, left});
 
+auto neighbours(const Position& pos)
+{
+    return directions | ranges::views::transform(std::bind_front(std::plus{}, pos));
+}
+
 auto all(std::size_t height, std::size_t width)
 {
     using namespace ::ranges;
