@@ -50,6 +50,14 @@ constexpr bool lessByY(const Position& lhs, const Position& rhs)
     return std::tie(lhs.y, lhs.x) < std::tie(rhs.y, rhs.x);
 }
 
+constexpr bool followedByY(const Position& left, const Position& right)
+{
+    return (left.x + 1) == right.x && left.y == right.y;
+};
+constexpr bool followedByX(const Position& left, const Position& right)
+{
+    return (left.y + 1) == right.y && left.x == right.x;
+};
 constexpr Position operator+(const Position& pos, const Delta& delta)
 {
     return {pos.y + delta.first, pos.x + delta.second};

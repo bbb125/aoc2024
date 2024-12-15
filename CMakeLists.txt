@@ -6,7 +6,7 @@ add_compile_options(-Wall -Wextra -Werror -Wpedantic)
 
 find_package(range-v3 REQUIRED)
 find_package(fmt REQUIRED)
-
+find_package(ctre REQUIRED)
 add_subdirectory(util)
 add_subdirectory(day1)
 add_subdirectory(day2)
@@ -21,3 +21,4 @@ add_subdirectory(day10)
 add_subdirectory(day11)
 add_subdirectory(day12)
 add_subdirectory(day13)
+add_subdirectory(day14)

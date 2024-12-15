@@ -154,14 +154,6 @@ std::vector<std::uint64_t> countEdges(const Filler& filler)
     {
         using namespace position;
 
-        auto onLineY = [](const auto& left, const auto& right)
-        {
-            return (left.x + 1) == right.x && left.y == right.y;
-        };
-        auto onLineX = [](const auto& left, const auto& right)
-        {
-            return (left.y + 1) == right.y && left.x == right.x;
-        };
         auto accumulate = [](const auto& range, auto group)
         {
             auto one = util::functional::constant(std::uint64_t{1});
@@ -173,10 +165,10 @@ std::vector<std::uint64_t> countEdges(const Filler& filler)
         byDirection[toIndex(DirectionIndex::Right)] |= actions::sort(lessByX);
 
         result.push_back(
-            accumulate(byDirection[toIndex(DirectionIndex::Up)], onLineY)
-            + accumulate(byDirection[toIndex(DirectionIndex::Down)], onLineY)
-            + accumulate(byDirection[toIndex(DirectionIndex::Right)], onLineX)
-            + accumulate(byDirection[toIndex(DirectionIndex::Left)], onLineX));
+            accumulate(byDirection[toIndex(DirectionIndex::Up)], position::followedByY)
+            + accumulate(byDirection[toIndex(DirectionIndex::Down)], position::followedByY)
+            + accumulate(byDirection[toIndex(DirectionIndex::Right)], position::followedByX)
+            + accumulate(byDirection[toIndex(DirectionIndex::Left)], position::followedByX));
     }
     return result;
 }

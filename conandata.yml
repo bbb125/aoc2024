@@ -4,3 +4,4 @@
 requirements:
   - "range-v3/0.12.0"
   - "fmt/11.0.2"
+  - "ctre/3.9.0"
