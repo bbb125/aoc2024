@@ -15,6 +15,7 @@
 namespace aoc2024::day10
 {
 using Map = std::vector<std::string>;
+namespace position = util::position;
 using Position = util::position::Position;
 
 bool inBounds(const Map& map, const Position& position)
@@ -37,14 +38,7 @@ int solve(const Map& map)
     using WorkStep = std::unordered_map<Position, RouteStartTracker>;
     auto currentStep = [&]
     {
-        return views::cartesian_product(views::iota(0, std::ssize(map)),
-                                        views::iota(0, std::ssize(map[0])))
-               | views::transform(
-                   [](const auto& pair)
-                   {
-                       auto [y, x] = pair;
-                       return Position{x, y};
-                   })
+        return position::all(std::ssize(map), std::ssize(map[0]))
                | views::filter(std::bind_front(std::equal_to{}, '0'),
                                std::bind_front(value, std::cref(map)))
                | views::transform(
@@ -144,14 +138,7 @@ int solve(const Map& map)
 
     auto currentStep = [&]
     {
-        return views::cartesian_product(views::iota(0, std::ssize(map)),
-                                        views::iota(0, std::ssize(map[0])))
-               | views::transform(
-                   [](const auto& pair)
-                   {
-                       auto [y, x] = pair;
-                       return Position{x, y};
-                   })
+        return position::all(std::ssize(map), std::ssize(map[0]))
                | views::filter(std::bind_front(std::equal_to{}, '0'),
                                std::bind_front(value, std::cref(map)))
                | views::transform(
