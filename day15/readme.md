@@ -23,7 +23,7 @@ input). The problem is that the movements will sometimes fail as boxes are shift
 of the robot difficult to predict.
 
 For example:
-
+```
 ##########
 #..O..O.O#
 #......O.#
@@ -34,6 +34,7 @@ For example:
 #.OO.O.OO#
 #....O...#
 ##########
+```
 
 ```txt
 <vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<><<v<<<v^vv^v>^
@@ -58,6 +59,7 @@ copy-pasting easier. Newlines within the move sequence should be ignored.)
 
 Here is a smaller example to get started:
 
+```txt
 ########
 #..O.O.#
 ##@.O..#
@@ -66,11 +68,13 @@ Here is a smaller example to get started:
 #...O..#
 #......#
 ########
+```
 
-<^^>>>vv<v>>v<<
+`<^^>>>vv<v>>v<<`
 Were the robot to attempt the given sequence of moves, it would push around the boxes as follows:
 
 Initial state:
+```
 ########
 #..O.O.#
 ##@.O..#
@@ -79,8 +83,10 @@ Initial state:
 #...O..#
 #......#
 ########
+```
 
 Move <:
+```
 ########
 #..O.O.#
 ##@.O..#
@@ -89,8 +95,10 @@ Move <:
 #...O..#
 #......#
 ########
+```
 
 Move ^:
+```
 ########
 #.@O.O.#
 ##..O..#
@@ -99,8 +107,10 @@ Move ^:
 #...O..#
 #......#
 ########
+```
 
 Move ^:
+```
 ########
 #.@O.O.#
 ##..O..#
@@ -109,8 +119,10 @@ Move ^:
 #...O..#
 #......#
 ########
+```
 
 Move >:
+```
 ########
 #..@OO.#
 ##..O..#
@@ -119,8 +131,10 @@ Move >:
 #...O..#
 #......#
 ########
+```
 
 Move >:
+```
 ########
 #...@OO#
 ##..O..#
@@ -129,8 +143,10 @@ Move >:
 #...O..#
 #......#
 ########
+```
 
 Move >:
+```
 ########
 #...@OO#
 ##..O..#
@@ -139,8 +155,9 @@ Move >:
 #...O..#
 #......#
 ########
-
+```
 Move v:
+```
 ########
 #....OO#
 ##..@..#
@@ -149,8 +166,10 @@ Move v:
 #...O..#
 #...O..#
 ########
+```
 
 Move v:
+```
 ########
 #....OO#
 ##..@..#
@@ -159,8 +178,9 @@ Move v:
 #...O..#
 #...O..#
 ########
-
+```
 Move <:
+```
 ########
 #....OO#
 ##.@...#
@@ -169,8 +189,10 @@ Move <:
 #...O..#
 #...O..#
 ########
+```
 
 Move v:
+```
 ########
 #....OO#
 ##.....#
@@ -179,8 +201,9 @@ Move v:
 #...O..#
 #...O..#
 ########
-
+```
 Move >:
+```
 ########
 #....OO#
 ##.....#
@@ -189,8 +212,10 @@ Move >:
 #...O..#
 #...O..#
 ########
+```
 
 Move >:
+```
 ########
 #....OO#
 ##.....#
@@ -199,8 +224,10 @@ Move >:
 #...O..#
 #...O..#
 ########
+```
 
 Move v:
+```
 ########
 #....OO#
 ##.....#
@@ -209,8 +236,10 @@ Move v:
 #...O..#
 #...O..#
 ########
+```
 
 Move <:
+```
 ########
 #....OO#
 ##.....#
@@ -219,8 +248,10 @@ Move <:
 #...O..#
 #...O..#
 ########
+```
 
 Move <:
+```
 ########
 #....OO#
 ##.....#
@@ -229,8 +260,9 @@ Move <:
 #...O..#
 #...O..#
 ########
+```
 The larger example has many more moves; after the robot has finished those moves, the warehouse would look like this:
-
+```
 ##########
 #.O.O.OOO#
 #........#
@@ -241,16 +273,18 @@ The larger example has many more moves; after the robot has finished those moves
 #O.....OO#
 #OO....OO#
 ##########
+```
 The lanternfish use their own custom Goods Positioning System (GPS for short) to track the locations of the boxes. The
 GPS coordinate of a box is equal to 100 times its distance from the top edge of the map plus its distance from the left
 edge of the map. (This process does not stop at wall tiles; measure all the way to the edges of the map.)
 
 So, the box shown below has a distance of 1 from the top edge of the map and 4 from the left edge of the map, resulting
 in a GPS coordinate of 100 * 1 + 4 = 104.
-
+```
 #######
 #...O..
 #......
+```
 The lanternfish would like to know the sum of all boxes' GPS coordinates after the robot finishes moving. In the larger
 example, the sum of all boxes' GPS coordinates is 10092. In the smaller example, the sum is 2028.
 
@@ -279,7 +313,7 @@ This will produce a new warehouse map which is twice as wide and with wide boxes
 does not change size.)
 
 The larger example from before would now look like this:
-
+```
 ####################
 ##....[]....[]..[]##
 ##............[]..##
@@ -290,9 +324,10 @@ The larger example from before would now look like this:
 ##..[][]..[]..[][]##
 ##........[]......##
 ####################
+```
 Because boxes are now twice as wide but the robot is still the same size and speed, boxes can be aligned such that they
 directly push two other boxes at once. For example, consider this situation:
-
+```
 #######
 #...#.#
 #.....#
@@ -300,11 +335,12 @@ directly push two other boxes at once. For example, consider this situation:
 #..O..#
 #.....#
 #######
-
+```
 `<vv<<^^<<^^`
 After appropriately resizing this map, the robot would push around these boxes as follows:
 
 Initial state:
+```
 ##############
 ##......##..##
 ##..........##
@@ -312,8 +348,9 @@ Initial state:
 ##....[]....##
 ##..........##
 ##############
-
+```
 Move <:
+```
 ##############
 ##......##..##
 ##..........##
@@ -321,8 +358,9 @@ Move <:
 ##....[]....##
 ##..........##
 ##############
-
+```
 Move v:
+```
 ##############
 ##......##..##
 ##..........##
@@ -330,8 +368,9 @@ Move v:
 ##....[].@..##
 ##..........##
 ##############
-
+```
 Move v:
+```
 ##############
 ##......##..##
 ##..........##
@@ -339,8 +378,9 @@ Move v:
 ##....[]....##
 ##.......@..##
 ##############
-
+```
 Move <:
+```
 ##############
 ##......##..##
 ##..........##
@@ -348,8 +388,9 @@ Move <:
 ##....[]....##
 ##......@...##
 ##############
-
+```
 Move <:
+```
 ##############
 ##......##..##
 ##..........##
@@ -357,8 +398,9 @@ Move <:
 ##....[]....##
 ##.....@....##
 ##############
-
+```
 Move ^:
+```
 ##############
 ##......##..##
 ##...[][]...##
@@ -366,8 +408,9 @@ Move ^:
 ##.....@....##
 ##..........##
 ##############
-
+```
 Move ^:
+```
 ##############
 ##......##..##
 ##...[][]...##
@@ -375,8 +418,9 @@ Move ^:
 ##.....@....##
 ##..........##
 ##############
-
+```
 Move <:
+```
 ##############
 ##......##..##
 ##...[][]...##
@@ -384,8 +428,9 @@ Move <:
 ##....@.....##
 ##..........##
 ##############
-
+```
 Move <:
+```
 ##############
 ##......##..##
 ##...[][]...##
@@ -393,8 +438,9 @@ Move <:
 ##...@......##
 ##..........##
 ##############
-
+```
 Move ^:
+```
 ##############
 ##......##..##
 ##...[][]...##
@@ -402,8 +448,9 @@ Move ^:
 ##..........##
 ##..........##
 ##############
-
+```
 Move ^:
+```
 ##############
 ##...[].##..##
 ##...@.[]...##
@@ -411,16 +458,18 @@ Move ^:
 ##..........##
 ##..........##
 ##############
+```
 This warehouse also uses GPS to locate the boxes. For these larger boxes, distances are measured from the edge of the
 map to the closest edge of the box in question. So, the box shown below has a distance of 1 from the top edge of the map
 and 5 from the left edge of the map, resulting in a GPS coordinate of 100 * 1 + 5 = 105.
-
+```
 ##########
 ##...[]...
 ##........
+```
 In the scaled-up version of the larger example from above, after the robot has finished all of its moves, the warehouse
 would look like this:
-
+```
 ####################
 ##[].......[].[][]##
 ##[]...........[].##
@@ -431,6 +480,7 @@ would look like this:
 ##..@......[].[][]##
 ##......[][]..[]..##
 ####################
+```
 The sum of these boxes' GPS coordinates is 9021.
 
 Predict the motion of the robot and boxes in this new, scaled-up warehouse. What is the sum of all boxes' final GPS
