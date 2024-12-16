@@ -330,11 +330,8 @@ std::uint64_t solve(WorldState world)
         ;
 
     return accumulate(world.boxes | views::values
-                          | views::filter(
-                              [](const auto& val)
-                              {
-                                  return val.next == position::right;
-                              })
+                          | views::filter(std::bind_front(std::equal_to{}, position::right),
+                                          &Box::next)
                           | views::transform(&Box::position),
                       std::uint64_t{0},
                       std::plus{},
