@@ -5,6 +5,7 @@
 #include <range/v3/view/iota.hpp>
 
 #include <array>
+#include <concepts>
 #include <utility>
 #include <functional>
 #include <tuple>
@@ -91,6 +92,23 @@ constexpr inline Direction down{1, 0};
 constexpr inline Direction left{0, -1};
 constexpr inline Direction right{0, 1};
 
+using DirectionDescription = std::pair<DirectionIndex, Direction>;
+constexpr DirectionDescription fromChar(char ch)
+{
+    switch (ch)
+    {
+    case '^':
+        return DirectionDescription{DirectionIndex::Up, up};
+    case 'v':
+        return DirectionDescription{DirectionIndex::Down, down};
+    case '<':
+        return DirectionDescription{DirectionIndex::Left, left};
+    case '>':
+        return DirectionDescription{DirectionIndex::Right, right};
+    }
+    std::unreachable();
+}
+
 constexpr inline auto directions = std::to_array({up, right, down, left});
 
 auto neighbours(const Position& pos)
@@ -98,7 +116,7 @@ auto neighbours(const Position& pos)
     return directions | ranges::views::transform(std::bind_front(std::plus{}, pos));
 }
 
-auto all(std::size_t height, std::size_t width)
+auto all(std::integral auto height, std::integral auto width)
 {
     using namespace ::ranges;
     return views::cartesian_product(views::iota(0, static_cast<int>(height)),
