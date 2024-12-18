@@ -86,6 +86,17 @@ constexpr std::size_t toIndex(DirectionIndex index)
 {
     return std::to_underlying(index);
 }
+
+constexpr DirectionIndex turnRight(DirectionIndex direction)
+{
+    return static_cast<DirectionIndex>((toIndex(direction) + 1) % 4);
+}
+
+constexpr DirectionIndex turnLeft(DirectionIndex direction)
+{
+    return static_cast<DirectionIndex>((toIndex(direction) + 3) % 4);
+}
+
 using Direction = Delta;
 constexpr inline Direction up{-1, 0};
 constexpr inline Direction down{1, 0};

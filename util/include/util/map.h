@@ -40,6 +40,11 @@ struct Map
         return position::all(std::ssize(data), std::ssize(data[0]));
     }
 
+    auto dim() const
+    {
+        return std::tuple{std::size(data), std::size(data[0])};
+    }
+
     MapData data;
 };
 
