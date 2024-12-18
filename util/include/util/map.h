@@ -40,10 +40,20 @@ struct Map
         return position::all(std::ssize(data), std::ssize(data[0]));
     }
 
+    auto height() const
+    {
+        return static_cast<int>(std::ssize(data));
+    }
+    auto width() const
+    {
+        return static_cast<int>(std::ssize(data[0]));
+    }
+
     auto dim() const
     {
-        return std::tuple{std::size(data), std::size(data[0])};
+        return std::tuple{height(), width()};
     }
+
 
     MapData data;
 };
