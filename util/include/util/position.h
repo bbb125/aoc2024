@@ -4,6 +4,8 @@
 #include <range/v3/view/transform.hpp>
 #include <range/v3/view/iota.hpp>
 
+#include <boost/functional/hash.hpp>
+
 #include <array>
 #include <concepts>
 #include <utility>
@@ -148,8 +150,8 @@ struct hash<aoc2024::util::position::Position>
     std::size_t operator()(const aoc2024::util::position::Position& position) const
     {
         std::size_t h = 17;
-        h = h * 31 + std::hash<int>{}(position.y);
-        h = h * 31 + std::hash<int>{}(position.x);
+        boost::hash_combine(h, position.y);
+        boost::hash_combine(h, position.x);
         return h;
     }
 };

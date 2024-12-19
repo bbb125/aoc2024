@@ -6,10 +6,13 @@
 
 #include <range/v3/all.hpp>
 
+#include <boost/unordered/unordered_flat_set.hpp>
+#include <boost/unordered/unordered_flat_map.hpp>
+
 #include <cassert>
 #include <vector>
 #include <string>
-#include <unordered_set>
+
 namespace aoc2024::day19
 {
 std::vector<std::string> testTowels{"r", "wr", "b", "g", "bwu", "rb", "gb", "br"};
@@ -27,8 +30,13 @@ std::vector<std::string> testPattern{
 struct PreprocessedTowels
 {
     std::size_t maxSize;
-    using Towels = std::unordered_set<std::string_view>;
+    using Towels = boost::unordered_flat_set<std::string_view>;
     using BySize = std::vector<Towels>;
+    bool contains(std::string_view towel) const
+    {
+        return towels[std::size(towel)].contains(towel);
+    }
+
     BySize towels;
 };
 
@@ -48,32 +56,36 @@ struct Matcher
 {
     Matcher(std::span<const std::string> towels)
         : preprocessedTowels{preprocessTowels(towels)}
-    {}
+    {
+        cache.reserve(10000);
+    }
 
     std::uint64_t operator()(std::string_view pattern)
     {
         using namespace ::ranges;
-        if (pattern.length() == 0)
+        if (std::empty(pattern))
             return 1;
 
         if (cache.contains(pattern))
             return cache[pattern];
 
-        std::uint64_t counter = 0;
-        for (std::size_t i = 1;
-             i <= std::min(preprocessedTowels.maxSize - 1, pattern.size());
-             ++i)
-        {
-            std::string_view left = pattern.substr(0, i);
-            std::string_view right = pattern.substr(i);
-            if (preprocessedTowels.towels[i].contains(left))
-                counter += (*this)(right);
-        }
+        auto rightBound = std::min(preprocessedTowels.maxSize - 1, pattern.size()) + 1;
+        auto counter = accumulate(  //
+            views::iota(std::size_t{1}, rightBound)
+                | views::transform(
+                    [&](std::size_t i)
+                    {
+                        return preprocessedTowels.contains(pattern.substr(0, i))
+                                   ? (*this)(pattern.substr(i))
+                                   : 0;
+                    }),
+            std::uint64_t{});
+
         cache[pattern] = counter;
         return counter;
     }
     PreprocessedTowels preprocessedTowels;
-    mutable std::unordered_map<std::string_view, std::uint64_t> cache;
+    mutable boost::unordered_flat_map<std::string_view, std::uint64_t> cache;
 };
 
 namespace part1
@@ -126,9 +138,8 @@ void solution()
 {
     using namespace ::ranges;
     auto inputTowels = towels();
-    Matcher matcher{inputTowels};
-    auto result = accumulate(patterns(), std::uint64_t{0}, std::plus{}, matcher);
-    fmt::print("Part I Solution: {}\n", result);
+    auto result = accumulate(patterns(), std::uint64_t{}, {}, Matcher{inputTowels});
+    fmt::print("Part II Solution: {}\n", result);
     assert(result == 1100663950563322);
 }
 }  // namespace part2

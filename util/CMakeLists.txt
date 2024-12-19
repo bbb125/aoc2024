@@ -5,5 +5,5 @@ target_include_directories(util
 )
 target_link_libraries(util
     PUBLIC
-        range-v3::range-v3
+        range-v3::range-v3 Boost::boost
 )
