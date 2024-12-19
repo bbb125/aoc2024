@@ -4,6 +4,8 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
+#include <boost/unordered/unordered_flat_map.hpp>
+
 #include <cstdlib>
 #include <span>
 #include <vector>
@@ -17,7 +19,7 @@ using util::isEven;
 std::uint64_t evolvePebbles(std::span<std::uint64_t> input, std::uint64_t times)
 {
     using namespace ::ranges;
-    using PebbleGeneration = std::unordered_map<std::uint64_t, std::uint64_t>;
+    using PebbleGeneration = boost::unordered_flat_map<std::uint64_t, std::uint64_t>;
     auto currentGeneration = [&]
     {
         PebbleGeneration result;

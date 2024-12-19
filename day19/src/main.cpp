@@ -66,8 +66,8 @@ struct Matcher
         if (std::empty(pattern))
             return 1;
 
-        if (cache.contains(pattern))
-            return cache[pattern];
+        if (auto it = cache.find(pattern); it != std::end(cache))
+            return it->second;
 
         auto rightBound = std::min(preprocessedTowels.maxSize - 1, pattern.size()) + 1;
         auto counter = accumulate(  //
