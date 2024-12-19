@@ -1,6 +1,8 @@
 #include "input.h"
+#include "util/util.h"
 #include "util/map.h"
 #include "util/position.h"
+#include "util/functional.h"
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -36,64 +38,65 @@ position::Map generateMap(std::span<const position::Position> fallingBytes,
 }
 
 
-struct Maze
+template <typename Predicate>
+std::optional<std::size_t> dijkstraMazeSearch(const position::Position& start,
+                                              const position::Position& end,
+                                              Predicate canMove)
 {
-    Maze(position::Map data)
-        : start{0, 0}
-        , end{data.height() - 1, data.width() - 1}
-        , map{std::move(data)}
-    {}
+    using namespace ::ranges;
+    using HeapElement = std::pair<std::size_t, position::Position>;  // cost, pos
 
+    std::vector<HeapElement> queue{HeapElement{0, start}};
 
-    constexpr bool canMove(const position::Position& pos) const
+    using Visited = std::unordered_set<position::Position>;
+    Visited visited;  // todo: use bitset if performance issues
+    while (!std::empty(queue))
+    {
+        pop_heap(queue, std::greater{}, &HeapElement::first);
+        auto [currentCost, currentPos] = queue.back();
+        queue.pop_back();
+
+        if (currentPos == end)
+            return currentCost;
+
+        if (visited.contains(currentPos))
+            continue;
+
+        visited.insert(currentPos);
+
+        for (const auto& nextPos :
+             position::directions
+                 | views::transform(std::bind_front(std::plus{}, currentPos))
+                 | views::filter(
+                     [&visited](const auto& pos)
+                     {
+                         return !visited.contains(pos);
+                     })
+                 | views::filter(canMove))
+        {
+            queue.emplace_back(currentCost + 1, nextPos);
+            push_heap(queue, std::greater{}, &HeapElement::first);
+        }
+    }
+    return std::nullopt;
+}
+
+auto makeCanMode(std::span<const position::Position> fallingBytes, int numberOfBytes, Dim dim)
+{
+    return [map = generateMap(fallingBytes, numberOfBytes, dim)](const auto& pos)
     {
         return map.inBounds(pos) && map.value(pos) != '#';
-    }
-
-    std::optional<std::size_t> search() const
-    {
-        using namespace ::ranges;
-        using HeapElement = std::pair<std::size_t, position::Position>;  // cost, pos
-
-        std::deque<HeapElement> queue{HeapElement{0, start}};
-
-        std::unordered_set<position::Position> visited;  // todo: use bitset if performance issues
-        while (!std::empty(queue))
-        {
-            auto [cost, pos] = queue.front();
-            queue.pop_front();
-
-            if (pos == end)
-                return cost;
-
-            if (visited.contains(pos))
-                continue;
-
-            visited.insert(pos);
-
-            for (const auto& nextPos :
-                 position::directions
-                     | views::transform(std::bind_front(std::plus{}, pos))
-                     | views::filter(std::bind_front(&Maze::canMove, this)))
-            {
-                auto newCost = cost + 1;
-                queue.emplace_back(newCost, nextPos);
-            }
-        }
-        return std::nullopt;
-    }
-
-    position::Position start;
-    position::Position end;
-    position::Map map;
-};
+    };
+}
 
 namespace part1
 {
 void test()
 {
-    Maze maze{generateMap(testInput, 12, testDim)};
-    auto solution = maze.search();
+    auto solution = dijkstraMazeSearch(  //
+        {0, 0},
+        {testDim.first - 1, testDim.second - 1},
+        makeCanMode(testInput, 12, testDim));
     fmt::print("Part I Test: {}\n", *solution);
     assert(solution == 22);
 }
@@ -103,8 +106,10 @@ void solution()
     auto data = input();
     constexpr int numberOfBytes = 1024;
     Dim dim{71, 71};
-    Maze maze{generateMap(data, numberOfBytes, dim)};
-    auto solution = maze.search();
+    auto solution = dijkstraMazeSearch(  //
+        {0, 0},
+        {dim.first - 1, dim.second - 1},
+        makeCanMode(data, numberOfBytes, dim));
     fmt::print("Part I Solution: {}\n", *solution);
 }
 }  // namespace part1
@@ -119,8 +124,11 @@ int search(std::span<const position::Position> fallingBytes, Dim dim, int start)
     while (left < right)
     {
         int mid = left + (right - left) / 2;
-        Maze maze{generateMap(fallingBytes, mid, dim)};
-        if (auto solution = maze.search(); !solution)
+        auto solution = dijkstraMazeSearch(  //
+            {0, 0},
+            {dim.first - 1, dim.second - 1},
+            makeCanMode(fallingBytes, mid, dim));
+        if (!solution)
             right = mid;
         else
             left = mid + 1;
@@ -153,7 +161,7 @@ int main()
     part1::test();
     part1::solution();
     part2::test();
-    part2::solution();
+    aoc2024::util::withTimer("part2::solution", part2::solution);
     //    Part I Test: 22
     //    Input size: 3450Part I Solution: 310
     //    Part II Test (index, pos): 20, (1, 6)
