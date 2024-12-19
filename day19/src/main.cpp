@@ -32,7 +32,7 @@ struct PreprocessedTowels
     BySize towels;
 };
 
-PreprocessedTowels preprocessTowels(const std::vector<std::string>& towels)
+PreprocessedTowels preprocessTowels(std::span<const std::string> towels)
 {
     PreprocessedTowels::BySize result;
     for (const auto& towel : towels)
@@ -46,9 +46,13 @@ PreprocessedTowels preprocessTowels(const std::vector<std::string>& towels)
 
 struct Matcher
 {
-    std::uint64_t countMatches(const PreprocessedTowels& preprocessedTowels,
-                               std::string_view pattern)
+    Matcher(std::span<const std::string> towels)
+        : preprocessedTowels{preprocessTowels(towels)}
+    {}
+
+    std::uint64_t operator()(std::string_view pattern)
     {
+        using namespace ::ranges;
         if (pattern.length() == 0)
             return 1;
 
@@ -63,40 +67,34 @@ struct Matcher
             std::string_view left = pattern.substr(0, i);
             std::string_view right = pattern.substr(i);
             if (preprocessedTowels.towels[i].contains(left))
-                counter += countMatches(preprocessedTowels, right);
+                counter += (*this)(right);
         }
         cache[pattern] = counter;
         return counter;
     }
-    std::unordered_map<std::string_view, std::uint64_t> cache;
+    PreprocessedTowels preprocessedTowels;
+    mutable std::unordered_map<std::string_view, std::uint64_t> cache;
 };
 
 namespace part1
 {
 
-
 void test()
 {
-    auto preprocessedTowels = preprocessTowels(testTowels);
-    Matcher matcher;
+    Matcher matcher{testTowels};
     for (const auto& pattern : testPattern)
-    {
-        fmt::print("{}: {}\n",
-                   pattern,
-                   matcher.countMatches(preprocessedTowels, pattern) != 0);
-    }
+        fmt::print("{}: {}\n", pattern, matcher(pattern) != 0);
 }
 
 void solution()
 {
     using namespace ::ranges;
     auto inputTowels = towels();
-    auto preprocessed = preprocessTowels(inputTowels);
     int count = 0;
-    Matcher matcher;
+    Matcher matcher{inputTowels};
     for (const auto& pattern : patterns())
     {
-        if (matcher.countMatches(preprocessed, pattern) != 0)
+        if (matcher(pattern) != 0)
         {
             fmt::print("{}\n", pattern);
             ++count;
@@ -112,12 +110,11 @@ namespace part2
 
 void test()
 {
-    auto preprocessedTowels = preprocessTowels(testTowels);
     std::uint64_t counter = 0;
-    Matcher matcher;
+    Matcher matcher{testTowels};
     for (const auto& pattern : testPattern)
     {
-        auto matches = matcher.countMatches(preprocessedTowels, pattern);
+        auto matches = matcher(pattern);
         fmt::print("{}: {}\n", pattern, matches);
         counter += matches;
     }
@@ -129,14 +126,8 @@ void solution()
 {
     using namespace ::ranges;
     auto inputTowels = towels();
-    auto result = accumulate(  //
-        patterns(),
-        std::uint64_t{0},
-        std::plus{},
-        [matcher = Matcher{}, towels = preprocessTowels(inputTowels)](const auto& pattern) mutable
-        {
-            return matcher.countMatches(towels, pattern);
-        });
+    Matcher matcher{inputTowels};
+    auto result = accumulate(patterns(), std::uint64_t{0}, std::plus{}, matcher);
     fmt::print("Part I Solution: {}\n", result);
     assert(result == 1100663950563322);
 }
