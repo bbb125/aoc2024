@@ -10,9 +10,6 @@
 
 #include <range/v3/all.hpp>
 
-#include <boost/unordered/unordered_flat_set.hpp>
-#include <boost/unordered/unordered_flat_map.hpp>
-
 #include <vector>
 #include <map>
 
@@ -67,7 +64,7 @@ struct Maze
         using namespace ::ranges;
         using HeapElement = std::pair<std::size_t, position::Position>;  // cost, pos
 
-        std::vector<HeapElement> queue{HeapElement{0, startPos}};
+        std::deque<HeapElement> queue{HeapElement{0, startPos}};
 
         auto visited = [&](const auto& pos)
         {
@@ -89,14 +86,16 @@ struct Maze
 
             output[currentPos.y][currentPos.x] = currentCost;
 
-            for (const auto& nextPos :
-                 position::directions
-                     | views::transform(std::bind_front(std::plus{}, currentPos))
-                     | views::filter(std::not_fn(visited)) | views::filter(canMove))
-            {
-                queue.emplace_back(currentCost + 1, nextPos);
-                push_heap(queue, std::greater{}, &HeapElement::first);
-            }
+            queue |= actions::push_back(
+                position::directions
+                | views::transform(std::bind_front(std::plus{}, currentPos))
+                | views::filter(std::not_fn(visited)) | views::filter(canMove)
+                | views::transform(
+                    [&](const auto& pos)
+                    {
+                        return HeapElement{currentCost + 1, pos};
+                    }));
+            push_heap(queue, std::greater{}, &HeapElement::first);
         }
     }
 
