@@ -25,7 +25,6 @@ constexpr auto prune(std::integral auto value)
      * operation. (If the secret number is 100000000 and you were to prune the
      * secret number, the secret number would become 16113920.)
      */
-
     return value & (16777216 - 1);
 }
 
@@ -71,18 +70,20 @@ using Number = std::int64_t;
 
 namespace part1
 {
-constexpr std::uint64_t solve()
+std::uint64_t solve(std::span<const Number> input, std::size_t iterations)
 {
     using namespace ::ranges;
-    auto values = input;
 
-    for (auto& value : values)
-    {
-        auto generator = makeRandomGenerator(value);
-        for (int i = 0; i <= 2000; ++i)
-            value = generator();
-    }
-    return accumulate(values, 0ull);
+    return accumulate(input,
+                      0ull,
+                      std::plus<>{},
+                      [&](auto value)
+                      {
+                          auto generator = makeRandomGenerator(value);
+                          for (std::size_t i = 0; i < iterations; ++i)
+                              generator();
+                          return generator();
+                      });
 }
 }  // namespace part1
 namespace part2
@@ -138,9 +139,9 @@ std::vector<Signal> generateSignals(std::span<const Number> prices)
                               [](const auto& priceRecord)
                               {
                                   return priceRecord[1] - priceRecord[0];
-                              })
-                          | views::sliding(4),
-                      prices | views::drop(4))
+                              })                // price changes
+                          | views::sliding(4),  // sequence of four changes
+                      prices | views::drop(4))  // zip with price after sequence
            | views::transform(
                [](const auto& changeSequence) -> Signal
                {
@@ -160,6 +161,11 @@ std::size_t generatePriceChange(std::span<const Number> input, std::size_t seque
 
     struct Counting
     {
+        void addIfNotPresent(std::size_t traderId, std::size_t price)
+        {
+            bananasCount += (!included.test(traderId)) * price;
+            included.set(traderId);
+        }
         std::size_t bananasCount = 0;
         boost::dynamic_bitset<> included;
     };
@@ -180,30 +186,20 @@ std::size_t generatePriceChange(std::span<const Number> input, std::size_t seque
         for (const auto& [price, sequence] : signals)
         {
             auto index = toNumber(sequence);
-
-            auto& totalEntry = totals[index];
-            if (!totalEntry.included.test(traderId))
-            {
-                totalEntry.bananasCount += price;
-                totalEntry.included.set(traderId);
-            }
+            totals[index].addIfNotPresent(traderId, price);
         }
     }
     return max(totals, {}, &Counting::bananasCount).bananasCount;
 }
 
-// void solve()
-//{
-//     fmt::print("Part2: {}\n", part2::generatePriceChange(input, 2000));
-// }
 }  // namespace part2
 }  // namespace aoc2024::day22
 
 int main()
 {
     using namespace aoc2024::day22;
-
-    //    fmt::print("Part1: {}\n", part1::solve());
+    std::vector<Number> test1{1, 10, 100, 2024};
+    fmt::print("Part1: {}\n", part1::solve(test1, 2000));
     std::vector<Number> test2{1, 2, 3, 2024};
     fmt::print("Part2 Test: {}\n", part2::generatePriceChange(test2, 2000));
 
