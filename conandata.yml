@@ -8,3 +8,4 @@ requirements:
   - "scnlib/4.0.1"
   - "abseil/20240722.0"
   - "boost/1.86.0"
+  - "flux/cci.20240115"

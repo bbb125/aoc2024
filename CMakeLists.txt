@@ -15,14 +15,16 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebIn
             -fsanitize=undefined)
     add_link_options(-fsanitize=address -fsanitize=undefined)
 endif ()
+add_compile_options(-fconstexpr-depth=3000000)
 
 
 find_package(range-v3 REQUIRED)
 find_package(fmt REQUIRED)
-find_package(ctre REQUIRED)
-find_package(scn REQUIRED)
-find_package(absl REQUIRED)
-find_package(Boost REQUIRED)
+find_package(ctre REQUIRED) # parse inputs
+find_package(scn REQUIRED) # parse inputs
+find_package(absl REQUIRED) # flat_hash_table
+find_package(Boost REQUIRED) # hashing flat_unordered_collections
+find_package(Flux REQUIRED) # experimental
 
 add_subdirectory(util)
 add_subdirectory(day1)
