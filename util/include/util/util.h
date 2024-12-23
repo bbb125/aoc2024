@@ -44,7 +44,7 @@ constexpr inline bool isOdd(std::integral auto pebble)
 
 
 template <typename Func>
-void withTimer(std::string_view label, Func&& func)
+auto withTimer(std::string_view label, Func&& func)
 {
     auto finalAction = [label, start = std::chrono::high_resolution_clock::now()]
     {
@@ -59,7 +59,7 @@ void withTimer(std::string_view label, Func&& func)
                                .count());
             });
     }();
-    std::invoke(func);
+    return std::invoke(func);
 }
 
 }  // namespace aoc2024::util

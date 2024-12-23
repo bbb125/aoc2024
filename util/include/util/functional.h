@@ -65,4 +65,10 @@ struct selector
 template <typename... Args>
 inline constexpr detail::selector<Args...> select{};
 
+template<std::size_t I>
+inline constexpr auto selectIth = [](auto&& arg)
+{
+    return std::get<I>(std::forward<decltype(arg)>(arg));
+};
+
 }  // namespace aoc2024::util::functional
