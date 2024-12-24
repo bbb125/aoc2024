@@ -1,4 +1,4 @@
-#include "input.h"
+#include <range/v3/all.hpp>
 
 #include <iostream>
 #include <vector>
@@ -14,15 +14,15 @@ namespace part1
 {
 int solve(std::vector<int> left, std::vector<int> right)
 {
+    using namespace ::ranges;
     assert(left.size() == right.size());
-    std::ranges::sort(left);
-    std::ranges::sort(right);
-    return std::ranges::fold_left(  //
-        std::views::zip(left, right),
+    return accumulate(  //
+        views::zip(actions::sort(left), actions::sort(right)),
         0,
-        [](int acc, const auto& val)
+        {},
+        [](const auto& pair)
         {
-            return acc + std::abs(std::get<0>(val) - std::get<1>(val));
+            return std::abs(pair.first - pair.second);
         });
 }
 
@@ -30,40 +30,36 @@ int test1()
 {
     std::vector<int> right = {4, 5, 6};
     return solve({3, 4, 2, 1, 3, 3}, {4, 3, 5, 3, 9, 3});
-}
-int task()
-{
-    return solve(left, right);
 }
 
 }  // namespace part1
 namespace part2
 {
-int solve(const std::vector<int>& left, const std::vector<int>& right)
+int solve(std::span<const int> left, std::span<const int> right)
 {
+    using namespace ::ranges;
     assert(left.size() == right.size());
     std::unordered_map<int, int> rightFrequencies;
     for (auto val : right)
         rightFrequencies[val]++;
 
-    return std::ranges::fold_left(  //
-        left,
-        0,
-        [&rightFrequencies](int acc, auto val)
-        {
-            return acc + rightFrequencies[val] * val;
-        });
+    return accumulate(  //
+        left
+            | views::transform(
+                [&rightFrequencies](auto val)
+                {
+                    return rightFrequencies[val] * val;
+                }),
+        0);
 }
 
 int test1()
 {
-    std::vector<int> right = {4, 5, 6};
-    return solve({3, 4, 2, 1, 3, 3}, {4, 3, 5, 3, 9, 3});
-}
-int task()
-{
+    auto left = {3, 4, 2, 1, 3, 3};
+    auto right = {4, 3, 5, 3, 9, 3};
     return solve(left, right);
 }
+
 }  // namespace part2
 }  // namespace aoc2024::day1
 
@@ -71,8 +67,7 @@ int main()
 {
     using namespace aoc2024::day1;
     std::print("1. Test 1: {}\n", part1::test1());
-    std::print("1. Task: {}\n", part1::task());
     std::print("2. Test 1: {}\n", part2::test1());
-    std::print("2. Task: {}\n", part2::task());
+
     return 0;
 }

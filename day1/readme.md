@@ -78,12 +78,14 @@ that number appears in the right list.
 
 Here are the same example lists again:
 
+```
 3 4
 4 3
 2 5
 1 3
 3 9
 3 3
+```
 For these example lists, here is the process of finding the similarity score:
 
 The first number in the left list is 3. It appears in the right list three times, so the similarity score increases by

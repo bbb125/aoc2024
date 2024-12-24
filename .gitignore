@@ -1,6 +1,9 @@
 # Ignore build directories
 /cmake-build-*/
 
+# Ignore inputs
+/inputs/
+
 # Ignore IDE files
 .idea/
 *.iws
