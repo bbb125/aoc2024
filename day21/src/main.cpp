@@ -1,5 +1,6 @@
 #include "util/functional.h"
 #include "util/position.h"
+#include "util/util.h"
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -88,11 +89,16 @@ std::string arrowpadPath(std::string_view numpadCode)
         std::plus{});
 }
 
+/**
+ * Implements a recursive depth search approach with memoization.
+ * @param code
+ * @param depth
+ * @return
+ */
 std::uint64_t solveCodeRecursive(std::string_view code, std::size_t depth)
 {
     using namespace ::ranges;
     using namespace best_moves;
-
 
     using LevelCache = boost::unordered_flat_map<std::string, std::uint64_t>;
     using Cache = std::vector<LevelCache>;
@@ -110,17 +116,16 @@ std::uint64_t solveCodeRecursive(std::string_view code, std::size_t depth)
 
         auto input = "A" + std::string{code};
 
-        if (auto it = cache[depth].find(input); it != cache[depth].end())
+        if (auto it = cache[depth].find(input); it != std::end(cache[depth]))
             return it->second;
 
         auto result = accumulate(  //
-            input | views::sliding(2)
+            input | views::transform(arrowpadIndex) | views::sliding(2)
                 | views::transform(
                     [&](const auto& pair)
                     {
                         using namespace best_moves;
-                        return self(arrowpad[arrowpadIndex(pair[0])][arrowpadIndex(pair[1])],
-                                    depth - 1);
+                        return self(arrowpad[pair[0]][pair[1]], depth - 1);
                     }),
             0ul);
         cache[depth].emplace(input, result);
@@ -130,52 +135,69 @@ std::uint64_t solveCodeRecursive(std::string_view code, std::size_t depth)
     return solver(arrowPath, depth);
 }
 
+
+constexpr std::size_t arrowpadSize = best_moves::arrowpad.size();
+
+using CacheLevel = std::array<std::array<std::size_t, arrowpadSize>, arrowpadSize>;
+
+template <std::size_t Depth>
+std::array<CacheLevel, Depth> buildCache()
+{
+    using namespace ::ranges;
+    using namespace best_moves;
+    std::array<CacheLevel, Depth> cache{};
+    for (auto i : views::iota(0u, arrowpadSize))
+        cache[0][i].fill(1);
+    for (std::size_t i = 1; i < Depth; ++i)
+    {
+        auto& prevCache = cache[i - 1];
+        auto& currentCache = cache[i];
+        for (auto [j, k] : views::cartesian_product(views::iota(0u, arrowpadSize),
+                                                    views::iota(0u, arrowpadSize)))
+        {
+            auto path = "A" + std::string{arrowpad[j][k]};
+
+            currentCache[j][k] = accumulate(  //
+                path | views::transform(arrowpadIndex) | views::sliding(2)
+                    | views::transform(
+                        [&](const auto& pair)
+                        {
+                            auto [from, to] = std::tuple(pair[0], pair[1]);
+                            return prevCache[from][to];
+                        }),
+                0ul);
+        }
+    }
+    return cache;
+}
+
+const auto precomputedCache = buildCache<26>();
+
+/**
+ * Implements a more dynamic programming approach, computing all lengths of
+ * paths from deeper level to the top.
+ * Technically this approach is better, because it can be precomputed (must be
+ * even possible to implement it as a constexpr/consteval function).
+ * Then reused for different inputs.
+ * @param code
+ * @param depth
+ * @return
+ */
 std::uint64_t solveCodeCached(std::string_view code, std::size_t depth)
 {
     using namespace ::ranges;
     using namespace best_moves;
 
-    using Cache = std::vector<std::vector<std::size_t>>;
-    constexpr std::size_t arrowpadSize = 5;
-    Cache cache{arrowpadSize, std::vector<std::size_t>(arrowpadSize, 1)};
-    for (std::size_t i = 0; i < depth; ++i)
-    {
-        Cache nextCache{arrowpadSize, std::vector<std::size_t>(arrowpadSize, 1)};
-        for (auto [j, k] : views::cartesian_product(views::iota(0u, arrowpadSize),
-                                                    views::iota(0u, arrowpadSize)))
-        {
-            auto path = std::string{arrowpad[j][k]};
-            if (path.length() <= 1)
-                continue;
-
-            nextCache[j][k] = accumulate(  //
-                path | views::sliding(2)
-                    | views::transform(
-                        [&](const auto& pair)
-                        {
-                            return cache[arrowpadIndex(pair[0])][arrowpadIndex(pair[1])];
-                        }),
-                0ul,
-                std::plus{});
-        }
-        cache = std::move(nextCache);
-        fmt::print("Cache: \n{}\n", fmt::join(cache, "\n"));
-    }
-
-    fmt::print("{}\n", code);
     auto target = "A" + arrowpadPath(code);
 
-    auto result = accumulate(  //
-        target | views::sliding(2)
+    return accumulate(  //
+        target | views::transform(arrowpadIndex) | views::sliding(2)
             | views::transform(
-                [&cache](const auto& pair)
+                [depth](const auto& pair)
                 {
-                    return cache[arrowpadIndex(pair[0])][arrowpadIndex(pair[1])];
+                    return precomputedCache[depth][pair[0]][pair[1]];
                 }),
-        0ul,
-        std::plus{});
-    fmt::print("\nResult: {}\n", result);
-    return result;
+        0ul);
 }
 
 std::uint64_t codeNumber(std::string_view code)
@@ -192,6 +214,19 @@ std::uint64_t codeNumber(std::string_view code)
         [](auto acc, auto ch)
         {
             return acc * 10 + (ch - '0');
+        });
+}
+
+std::uint64_t solve(auto inputRange, std::size_t depth, auto solveFunction)
+{
+    using namespace ::ranges;
+    return accumulate(  //
+        inputRange,
+        0ul,
+        std::plus{},
+        [&](const auto& code)
+        {
+            return solveFunction(code, depth) * codeNumber(code);
         });
 }
 }  // namespace aoc2024::day21
@@ -219,31 +254,39 @@ int main()
      *     +---+---+
      */
 
-    // test: "029A", "980A", "179A", "456A", "379A"
+    auto input =
+        std::to_array<std::string_view>({"029A", "980A", "179A", "456A", "379A"});
     {
-        auto result = accumulate(  //
-            std::to_array<std::string_view>({"029A", "980A", "179A", "456A", "379A"}),
-            0ul,
-            std::plus{},
-            [](const auto& code)
-            {
-                return solveCodeRecursive(code, 2) * codeNumber(code);
-            });
+        auto result = solve(input, 2, solveCodeRecursive);
         assert(result = 126384);
         fmt::print("Part I: {}\n", result);
     }
+    // test: "029A", "980A", "179A", "456A", "379A"
     {
-        auto result = accumulate(  //
-            std::to_array<std::string_view>({"029A", "980A", "179A", "456A", "379A"}),
-            0ul,
-            std::plus{},
-            [](const auto& code)
+        auto result = solve(input, 2, solveCodeCached);
+        assert(result = 126384);
+        fmt::print("Part I Another approach: {}\n", result);
+    }
+    {
+        auto result = aoc2024::util::withTimer(  //
+            "Solve Recursive:",
+            [&]
             {
-                return solveCodeRecursive(code, 25)
-                       * codeNumber(code);
+                return solve(input, 25, solveCodeRecursive);
             });
         assert(result = 154115708116294);
         fmt::print("Part II: {}\n", result);
     }
+    {
+        auto result = aoc2024::util::withTimer(  //
+            "Solve With Precomputed Cache:",
+            [&]
+            {
+                return solve(input, 25, solveCodeCached);
+            });
+        assert(result = 154115708116294);
+        fmt::print("Part II Another approach: {}\n", result);
+    }
+
     return 0;
 }
