@@ -133,8 +133,7 @@ std::string solve(const LanParty& party)
 int main(int argc, char** argv)
 {
     using namespace aoc2024::day23;
-    std::span<char*> args(argv, argc);
-    if (args.size() > 1)
+    if (auto args = std::span(argv, argc); args.size() > 1)
     {
         auto inputs = loadInputs(args[1]);
         fmt::print("Part I: {}\n", part1::solve(inputs));
