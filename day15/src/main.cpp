@@ -108,7 +108,7 @@ struct WorldState
     }
 
     position::Position robot{};
-    std::unordered_set<position::Position> boxes;
+    std::unordered_set<position::Position> boxes{};
     position::Map map;
     std::vector<position::Direction> moves;
     std::size_t currentStep = 0;

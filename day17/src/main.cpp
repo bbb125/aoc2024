@@ -37,7 +37,7 @@ struct Vm
         RegisterType b = 0;
         RegisterType c = 0;
         int ip = 0;
-        std::vector<int> out;
+        std::vector<int> out{};
     };
 
     /**
@@ -164,16 +164,6 @@ struct Vm
 };
 
 
-// 2, 4, bst 4
-// 1, 1, bxl 1
-// 7, 5, cdv 5
-// 1, 5, bxl 5
-// 0, 3, adv 3
-// 4, 3, bxc 3 -
-// 5, 5, out 5
-
-// 3, 0, jnz 0   -
-
 /*
  * {
  *    b <- a mod 8 (1000  1 10 11 100 101 110 111 1000)
@@ -216,37 +206,11 @@ void solution()
 }  // namespace part1
 namespace part2
 {
-// void test()
-//{
-//     vm::Program program{0, 3, 5, 4, 3, 0};
-//     auto interruptor = makeInterruptPredicate(program);
-//     for (vm::RegisterType i = 117440;
-//          i < std::numeric_limits<vm::RegisterType>::max();
-//          ++i)
-//     {
-//         vm::State state{.a = i, .b = 0, .c = 0, .ip = 0, .out = {}};
-//
-//         auto status = vm::execute(program, state, interruptor);
-//         if (i % 100'000 == 0)
-//             fmt::print("Step {}\n", i);
-//         if (status == vm::Status::Finished && ::ranges::equal(program, state.out))
-//         {
-//             fmt::print("Part II Test: {}\n", i);
-//             return;
-//         }
-//     }
-// }
-//
 
-struct Searcher
+Vm::RegisterType search(std::span<const int> program)
 {
-    Vm::RegisterType operator()() const
-    {
-        return *searchImpl(0, std::ssize(program));
-    }
-
-
-    std::optional<Vm::RegisterType> searchImpl(Vm::RegisterType a, int pos) const
+    auto searcher =  //
+        [&](this auto& self, Vm::RegisterType a, int pos) -> std::optional<Vm::RegisterType>
     {
         if (pos == 0)
             return a;
@@ -255,19 +219,20 @@ struct Searcher
         {
             if (Vm vm{aVal}; vm.execute(program).front() == program[pos - 1])
             {
-                if (auto result = searchImpl(aVal, pos - 1))
+                if (auto result = self(aVal, pos - 1))
                     return result;
             }
         }
         return std::nullopt;
-    }
-    std::span<const int> program;
-};
+    };
+    return *searcher(0, std::ssize(program));
+}
+
 void solution()
 {
     std::vector<int> program{2, 4, 1, 1, 7, 5, 1, 5, 0, 3, 4, 3, 5, 5, 3, 0};
-    Searcher searcher{program};
-    fmt::print("Part II Solution: {}\n", searcher());
+
+    fmt::print("Part II Solution: {}\n", search(program));
 
     // self-test
     Vm vm{164542125272765};
@@ -282,7 +247,6 @@ int main()
     using namespace aoc2024::day17;
     part1::test();
     part1::solution();
-    //    part2::test();
     part2::solution();
     return 0;
 }

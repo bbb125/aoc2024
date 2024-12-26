@@ -9,7 +9,6 @@
 
 #include <deque>
 #include <unordered_set>
-#include <bitset>
 #include <mdspan>
 
 namespace aoc2024::day16
