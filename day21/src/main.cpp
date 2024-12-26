@@ -1,5 +1,3 @@
-#include "util/functional.h"
-#include "util/position.h"
 #include "util/util.h"
 
 #include <fmt/format.h>
@@ -9,17 +7,15 @@
 
 #include <boost/unordered/unordered_flat_map.hpp>
 
-#include <cassert>
 #include <vector>
 #include <unordered_set>
 #include <deque>
 #include <string>
+#include <functional>
 
 namespace aoc2024::day21
 {
 
-namespace best_moves
-{
 // clang-format off
 constexpr auto numpad = std::to_array({
     // From 0 to A
@@ -70,35 +66,62 @@ constexpr std::size_t arrowpadIndex(char ch)
     std::unreachable();
 }
 
-}  // namespace best_moves
-
 std::string arrowpadPath(std::string_view numpadCode)
 {
     using namespace ::ranges;
     auto input = "A" + std::string{numpadCode};
     return accumulate(  //
-        input | views::sliding(2)
+        input | views::transform(numpadIndex) | views::sliding(2)
             | views::transform(
                 [](const auto& pair)
                 {
-                    using namespace best_moves;
-                    return std::string(
-                        numpad[numpadIndex(pair[0])][numpadIndex(pair[1])]);
+                    return std::string(numpad[pair[0]][pair[1]]);
                 }),
-        std::string{},
-        std::plus{});
+        std::string{});
 }
 
+
+std::uint64_t codeNumber(std::string_view code)
+{
+    using namespace ::ranges;
+    return accumulate(  //
+        code
+            | views::filter(
+                [](char ch)
+                {
+                    return std::isdigit(static_cast<unsigned char>(ch));
+                }),
+        0ul,
+        [](auto acc, auto ch)
+        {
+            return acc * 10 + (ch - '0');
+        });
+}
+
+auto solve = [](auto inputRange, std::size_t depth, auto solveFunction)
+{
+    using namespace ::ranges;
+    return accumulate(  //
+        inputRange,
+        0ul,
+        std::plus{},
+        [&](const auto& code)
+        {
+            return std::invoke(solveFunction, code, depth) * codeNumber(code);
+        });
+};
+
+namespace memoization_approach
+{
 /**
  * Implements a recursive depth search approach with memoization.
  * @param code
  * @param depth
  * @return
  */
-std::uint64_t solveCodeRecursive(std::string_view code, std::size_t depth)
+std::uint64_t solve(std::string_view code, std::size_t depth)
 {
     using namespace ::ranges;
-    using namespace best_moves;
 
     using LevelCache = boost::unordered_flat_map<std::string, std::uint64_t>;
     using Cache = std::vector<LevelCache>;
@@ -124,7 +147,6 @@ std::uint64_t solveCodeRecursive(std::string_view code, std::size_t depth)
                 | views::transform(
                     [&](const auto& pair)
                     {
-                        using namespace best_moves;
                         return self(arrowpad[pair[0]][pair[1]], depth - 1);
                     }),
             0ul);
@@ -135,8 +157,11 @@ std::uint64_t solveCodeRecursive(std::string_view code, std::size_t depth)
     return solver(arrowPath, depth);
 }
 
+}  // namespace memoization_approach
 
-constexpr std::size_t arrowpadSize = best_moves::arrowpad.size();
+namespace dynamic_programming_approach
+{
+constexpr std::size_t arrowpadSize = arrowpad.size();
 
 using CacheLevel = std::array<std::array<std::size_t, arrowpadSize>, arrowpadSize>;
 
@@ -144,10 +169,10 @@ template <std::size_t Depth>
 std::array<CacheLevel, Depth> buildCache()
 {
     using namespace ::ranges;
-    using namespace best_moves;
     std::array<CacheLevel, Depth> cache{};
     for (auto i : views::iota(0u, arrowpadSize))
         cache[0][i].fill(1);
+
     for (std::size_t i = 1; i < Depth; ++i)
     {
         auto& prevCache = cache[i - 1];
@@ -171,7 +196,9 @@ std::array<CacheLevel, Depth> buildCache()
     return cache;
 }
 
-const auto precomputedCache = buildCache<26>();
+const auto precomputedCache =
+    aoc2024::util::withTimer<std::chrono::nanoseconds>("Cache initialization",
+                                                       buildCache<26>);
 
 /**
  * Implements a more dynamic programming approach, computing all lengths of
@@ -183,58 +210,28 @@ const auto precomputedCache = buildCache<26>();
  * @param depth
  * @return
  */
-std::uint64_t solveCodeCached(std::string_view code, std::size_t depth)
+std::uint64_t solve(std::string_view code, std::size_t depth)
 {
     using namespace ::ranges;
-    using namespace best_moves;
 
     auto target = "A" + arrowpadPath(code);
 
     return accumulate(  //
         target | views::transform(arrowpadIndex) | views::sliding(2)
             | views::transform(
-                [depth](const auto& pair)
+                [&cache = precomputedCache[depth]](const auto& pair)
                 {
-                    return precomputedCache[depth][pair[0]][pair[1]];
+                    return cache[pair[0]][pair[1]];
                 }),
         0ul);
 }
 
-std::uint64_t codeNumber(std::string_view code)
-{
-    using namespace ::ranges;
-    return accumulate(  //
-        code
-            | views::filter(
-                [](char ch)
-                {
-                    return std::isdigit(static_cast<unsigned char>(ch));
-                }),
-        0ul,
-        [](auto acc, auto ch)
-        {
-            return acc * 10 + (ch - '0');
-        });
-}
-
-std::uint64_t solve(auto inputRange, std::size_t depth, auto solveFunction)
-{
-    using namespace ::ranges;
-    return accumulate(  //
-        inputRange,
-        0ul,
-        std::plus{},
-        [&](const auto& code)
-        {
-            return solveFunction(code, depth) * codeNumber(code);
-        });
-}
+}  // namespace dynamic_programming_approach
 }  // namespace aoc2024::day21
 
 int main()
 {
     using namespace aoc2024::day21;
-    using namespace ::ranges;
 
     /**
      *     +---+---+
@@ -256,37 +253,24 @@ int main()
 
     auto input =
         std::to_array<std::string_view>({"029A", "980A", "179A", "456A", "379A"});
+
+    auto verify = [&input](std::string_view description,
+                           auto&& approach,
+                           std::size_t depth,
+                           std::uint64_t expected)
     {
-        auto result = solve(input, 2, solveCodeRecursive);
-        assert(result = 126384);
-        fmt::print("Part I: {}\n", result);
-    }
-    // test: "029A", "980A", "179A", "456A", "379A"
-    {
-        auto result = solve(input, 2, solveCodeCached);
-        assert(result = 126384);
-        fmt::print("Part I Another approach: {}\n", result);
-    }
-    {
-        auto result = aoc2024::util::withTimer(  //
-            "Solve Recursive:",
-            [&]
-            {
-                return solve(input, 25, solveCodeRecursive);
-            });
-        assert(result = 154115708116294);
-        fmt::print("Part II: {}\n", result);
-    }
-    {
-        auto result = aoc2024::util::withTimer(  //
-            "Solve With Precomputed Cache:",
-            [&]
-            {
-                return solve(input, 25, solveCodeCached);
-            });
-        assert(result = 154115708116294);
-        fmt::print("Part II Another approach: {}\n", result);
-    }
+        auto result = aoc2024::util::withTimer<std::chrono::nanoseconds>(  //
+            description,
+            std::bind_front(solve, input, depth, std::forward<decltype(approach)>(approach)));
+        solve(input, 2, memoization_approach::solve);
+        aoc2024::util::verify(description, result == expected);
+        fmt::print("{}: {}\n", description, result);
+    };
+
+    verify("Part I Memoization Approach", memoization_approach::solve, 2, 126384);
+    verify("Part I DP Approach", dynamic_programming_approach::solve, 2, 126384);
+    verify("Part II Memoization Approach", memoization_approach::solve, 25, 154115708116294);
+    verify("Part II DP Approach", dynamic_programming_approach::solve, 25, 154115708116294);
 
     return 0;
 }
